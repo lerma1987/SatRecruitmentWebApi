@@ -9,7 +9,6 @@ using Sat.Recruitment.Core.Interfaces;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using XAct.Users;
 
 namespace Sat.Recruitment.Api.Controllers
 {
@@ -38,7 +37,7 @@ namespace Sat.Recruitment.Api.Controllers
         /// Gets all the UserTypes.
         /// </summary>
         /// <returns>A list of UserTypes.</returns>
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -60,14 +59,14 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="id">UserType Id.</param>
         /// <returns>A single UserType.</returns>
-        [Authorize(Roles = "Admin")]
-        [HttpGet("{id}")]
+        //[Authorize(Roles = "Admin")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var response = new ApiResponse<UserTypeDto>();
             if (id <= 0)
@@ -97,7 +96,7 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="userTypeDto">The UserType object to insert.</param>
         /// <returns>The UserType inserted.</returns>
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(UserTypeDto))]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -131,7 +130,7 @@ namespace Sat.Recruitment.Api.Controllers
         /// <param name="id">The UserType Id to update.</param>
         /// <param name="userTypeDto">The UserType object to update.</param>
         /// <returns>The UserType updated.</returns>
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -170,8 +169,8 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="id">The UserType Id to delete.</param>
         /// <returns>True or false if the UserType was deleted.</returns>
-        [Authorize(Roles = "Admin")]
-        [HttpDelete("{id:int}")]
+        //[Authorize(Roles = "Admin")]
+        [HttpDelete]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

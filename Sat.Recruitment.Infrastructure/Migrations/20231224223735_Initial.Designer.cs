@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sat.Recruitment.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sat.Recruitment.Infrastructure.Data;
 namespace Sat.Recruitment.Infrastructure.Migrations
 {
     [DbContext(typeof(SatRecruitmentContext))]
-    partial class SatRecruitmentContextModelSnapshot : ModelSnapshot
+    [Migration("20231224223735_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

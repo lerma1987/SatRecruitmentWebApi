@@ -8,14 +8,17 @@ namespace Sat.Recruitment.Infrastructure.Mappings
     {
         public AutomapperProfile()
         {
-            CreateMap<User, UserDto>();
-            CreateMap<UserDto, User>();
+            CreateMap<UserDetails, UserDto>();
+            CreateMap<UserDto, UserDetails>();
 
             CreateMap<UserType, UserTypeDto>();
             CreateMap<UserTypeDto, UserType>();
 
             CreateMap<UserAuth, UserAuthDto>();
             CreateMap<UserAuthDto, UserAuth>();
+
+            CreateMap<AppUser, UserAuthDto>();
+            CreateMap<UserAuthDto, AppUser>();
         }
     }
 }

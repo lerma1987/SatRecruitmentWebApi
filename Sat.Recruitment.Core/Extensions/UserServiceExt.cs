@@ -10,9 +10,9 @@ namespace Sat.Recruitment.Core.Extensions
     {
         static IEnumerable<UserType> _dbUserTypes;
         public static ArrayList _invalidUserTxtLines;
-        public static IEnumerable<User> GetUsersFromFile(this IUserService userService, IUserTypeService userTypeService, string path)
+        public static IEnumerable<UserDetails> GetUsersFromFile(this IUserService userService, IUserTypeService userTypeService, string path)
         {
-            List<User> users = new List<User>();
+            List<UserDetails> users = new List<UserDetails>();
             StreamReader reader = ReadUsersFromFile(path);
             _dbUserTypes = userTypeService.GetUserTypes();
             _invalidUserTxtLines = new ArrayList();
@@ -67,9 +67,9 @@ namespace Sat.Recruitment.Core.Extensions
 
             return reader;
         }
-        private static User ConvertToUserEntity(string line)
+        private static UserDetails ConvertToUserEntity(string line)
         {
-            User userEntity = null;
+            UserDetails userEntity = null;
             UserType dbUserType = null;
 
             //Using Trim() we can discard those empty lines
@@ -80,7 +80,7 @@ namespace Sat.Recruitment.Core.Extensions
             {                
                 dbUserType = _dbUserTypes.Where(x => x.TypeName.ToLower().Contains(userInfo[4].ToString().Trim().ToLower())).FirstOrDefault();
                 if (dbUserType != null)
-                    userEntity = new User
+                    userEntity = new UserDetails
                     {
                         Name = userInfo[0].ToString(),
                         Email = userInfo[1].ToString(),

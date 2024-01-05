@@ -6,14 +6,14 @@ using System.Linq;
 
 namespace Sat.Recruitment.Infrastructure.Repositories
 {
-    public class UserRepository : BaseRepository<User>, IUserRepository
+    public class UserRepository : BaseRepository<UserDetails>, IUserRepository
     {
         public UserRepository(SatRecruitmentContext context) : base(context) { }
-        public async Task<IEnumerable<User>> FindByName(string name)
+        public async Task<IEnumerable<UserDetails>> FindByName(string name)
         {
             return await _entities.Where(x => x.Name.ToLower().Contains(name.ToLower())).ToListAsync();
         }
-        public async Task<IEnumerable<User>> FindDuplicatedUsers(IEnumerable<User> usersToFind)
+        public async Task<IEnumerable<UserDetails>> FindDuplicatedUsers(IEnumerable<UserDetails> usersToFind)
         {
             var queryResult = await Task.FromResult((from userItem in usersToFind
                                                      from dbUser in _entities

@@ -10,6 +10,7 @@ using Sat.Recruitment.Core.Services;
 using Sat.Recruitment.Infrastructure.Data;
 using Sat.Recruitment.Infrastructure.Repositories;
 using System.Text;
+using Sat.Recruitment.Core.Entities;
 
 namespace Sat.Recruitment.Infrastructure.Extensions
 {
@@ -23,14 +24,20 @@ namespace Sat.Recruitment.Infrastructure.Extensions
 
             return services;
         }
-
         public static IServiceCollection AddOptions(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<UserAuthRepository>(options => configuration.GetSection("ApiSettings:Secret").Bind(options));
+            services.Configure<UnitOfWork>(options => configuration.GetSection("ApiSettings:SecretKey").Bind(options));
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 5;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+            });
 
             return services;
         }
-
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddTransient<IUserService, UserService>();
@@ -38,17 +45,23 @@ namespace Sat.Recruitment.Infrastructure.Extensions
             services.AddTransient<IUserAuthService, UserAuthService>();
             services.AddTransient<IUserAuthRepository, UserAuthRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
-            services.AddTransient<IUnitOfWork, UnitOfWork>();            
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
-            /*---------Add CORS configuration----------*/
+            /*---------ADD CACHE SERVICE----------*/
+            //services.AddResponseCaching();
+
+            /*---------AUTHENTICATION SUPPORT WITH .NET IDENTITY----------*/
+            services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<SatRecruitmentContext>();
+
+            /*---------ADD CORS CONFIGURATION----------*/
             services.AddCors(p => p.AddPolicy("CORSPolicy", build =>
             {
-                //Change WithOrigins params to specify the domains that can consume this API.
-                build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader(); 
+                //CHANGE WITHORIGINS PARAMS TO SPECIFY THE DOMAINS THAT CAN CONSUME THIS API.
+                build.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
             }));
 
-            /*---------Add Authentication configuration----------*/
-            var key = configuration.GetValue<string>("ApiSettings:Secret");
+            /*---------ADD AUTHENTICATION CONFIGURATION----------*/
+            var key = configuration.GetValue<string>("ApiSettings:SecretKey");
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -66,9 +79,36 @@ namespace Sat.Recruitment.Infrastructure.Extensions
                 };
             });
 
+            //Facebook Authentication
+            //services.AddAuthentication()
+            //  .AddFacebook(options => {
+            //    options.AppId = "3301164923542188";
+            //    options.AppSecret = "7e8f986c7f5907abf122ac61c0d1b4b1";
+            //}).AddGoogle(options => {
+            //    options.ClientId = "370954348970-1n9sst0i3qemdes51emnu0h7q14fr4u6.apps.googleusercontent.com";
+            //    options.ClientSecret = "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";
+            //}).AddMicrosoftAccount(options => {
+            //    options.ClientId = "707a9dfc-2b98-44a5-8c82-0128d128f774";
+            //    options.ClientSecret = "2FX8Q~43D6vfmXBCBO5l.WApSRVQLOmnHgzTcdj6";
+            //});
+
+            //Authorization based on Policies
+            //services.AddAuthorization(options =>
+            //{
+            //    options.AddPolicy("Administrador", policy => policy.RequireRole("Administrador"));
+            //    options.AddPolicy("Registrado", policy => policy.RequireRole("Registrado"));
+            //    options.AddPolicy("Usuario", policy => policy.RequireRole("Usuario"));
+            //    options.AddPolicy("UsuarioYAdministrador", policy => policy.RequireRole("Administrador").RequireRole("Usuario"));
+
+            //    //Claims Policy
+            //    options.AddPolicy("AdministradorCrear", policy => policy.RequireRole("Administrador").RequireClaim("Create", "True"));
+            //    options.AddPolicy("AdministradorEditarBorrar", policy => policy.RequireRole("Administrador").RequireClaim("Edit", "True").RequireClaim("Delete", "True"));
+            //    options.AddPolicy("AdministradorCrearEditarBorrar", policy => policy.RequireRole("Administrador").RequireClaim("Create", "True")
+            //    .RequireClaim("Edit", "True").RequireClaim("Delete", "True"));
+            //});
+
             return services;
         }
-
         public static IServiceCollection AddSwagger(this IServiceCollection services, string xmlFileName)
         {
             services.AddSwaggerGen(doc =>
@@ -80,7 +120,7 @@ namespace Sat.Recruitment.Infrastructure.Extensions
                 {
                     Description = "Authentication JWT using Bearer scheme. \r\n\r\n" +
                     "Type 'Bearer' word followed by an [space] then the Token \r\n\r\n" +
-                    "Ex: \"Bearer t0k3nH3r3xxxxx\"",
+                    "Ex: \"Bearer t0k3nH3r3\"",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Scheme = "Bearer"

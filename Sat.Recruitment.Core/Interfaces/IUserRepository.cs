@@ -2,9 +2,9 @@
 
 namespace Sat.Recruitment.Core.Interfaces
 {
-    public interface IUserRepository : IRepository<User>
+    public interface IUserRepository : IRepository<UserDetails>
     {
-        Task<IEnumerable<User>> FindByName(string name);
-        Task<IEnumerable<User>> FindDuplicatedUsers(IEnumerable<User> usersToFind);
+        Task<IEnumerable<UserDetails>> FindByName(string name);
+        Task<IEnumerable<UserDetails>> FindDuplicatedUsers(IEnumerable<UserDetails> usersToFind);
     }
 }

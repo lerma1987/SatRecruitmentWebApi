@@ -11,11 +11,11 @@ namespace Sat.Recruitment.Core.Services
         { 
             _unitOfWork = unitOfWork;
         }
-        public UserAuth GetUserById(int id)
+        public AppUser GetUserById(string id)
         {
             return _unitOfWork.UserAuthRepository.GetUserById(id);
         }
-        public ICollection<UserAuth> GetUsers()
+        public ICollection<AppUser> GetUsers()
         {
             return _unitOfWork.UserAuthRepository.GetUsers();
         }
@@ -23,13 +23,13 @@ namespace Sat.Recruitment.Core.Services
         {
             return _unitOfWork.UserAuthRepository.IsUniqueUser(username);
         }
-        public Task<UserLoginResponseDto> Login(UserLoginDto userLoginDto)
+        public async Task<UserLoginResponseDto> Login(UserLoginDto userLoginDto)
         {
-            return _unitOfWork.UserAuthRepository.Login(userLoginDto);
+            return await _unitOfWork.UserAuthRepository.Login(userLoginDto);
         }
-        public Task<UserAuth> Register(UserRegisterDto userRegisterDto)
+        public async Task<UserAuthDto> Register(UserRegisterDto userRegisterDto)
         {
-            return _unitOfWork.UserAuthRepository.Register(userRegisterDto);
+            return await _unitOfWork.UserAuthRepository.Register(userRegisterDto);
         }
     }
 }

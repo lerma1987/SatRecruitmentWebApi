@@ -1,27 +1,49 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
+using Sat.Recruitment.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Sat.Recruitment.Api
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOptions(builder.Configuration);
+builder.Services.AddDbContexts(builder.Configuration);
+builder.Services.AddServices(builder.Configuration);
+builder.Services.AddSingleton(builder.Configuration);
+builder.Services.AddSwagger($"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddControllers(options =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+    options.CacheProfiles.Add("Default30seconds", new CacheProfile { Duration = 30 });
+}).AddNewtonsoftJson();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+
+////Soporte para CORS
+//app.UseCors(builder =>
+//{
+//    builder.AllowAnyOrigin();
+//    builder.AllowAnyMethod();
+//    builder.AllowAnyMethod();
+//});
+
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

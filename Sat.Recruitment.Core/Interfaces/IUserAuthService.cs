@@ -6,10 +6,10 @@ namespace Sat.Recruitment.Core.Interfaces
 {
     public interface IUserAuthService
     {
-        ICollection<UserAuth> GetUsers();
-        UserAuth GetUserById(int id);
+        ICollection<AppUser> GetUsers();
+        AppUser GetUserById(string id);
         bool IsUniqueUser(string username);
         Task<UserLoginResponseDto> Login(UserLoginDto userLoginDto);
-        Task<UserAuth> Register(UserRegisterDto userRegisterDto);
+        Task<UserAuthDto> Register(UserRegisterDto userRegisterDto);
     }
 }

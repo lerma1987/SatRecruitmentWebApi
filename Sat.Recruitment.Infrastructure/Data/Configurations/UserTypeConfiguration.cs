@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sat.Recruitment.Core.Entities;
-using System.Reflection.Emit;
 
 namespace Sat.Recruitment.Infrastructure.Data.Configurations
 {
@@ -25,7 +24,7 @@ namespace Sat.Recruitment.Infrastructure.Data.Configurations
                 .HasMaxLength(50)
                 .IsUnicode(false);
 
-            builder.HasMany(d => d.Users)
+            builder.HasMany(d => d.UserDetails)
                 .WithOne(p => p.UserType)
                 .HasForeignKey(d => d.UserTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

@@ -5,33 +5,43 @@ using Sat.Recruitment.Core.Entities;
 using Sat.Recruitment.Core.Interfaces;
 using Sat.Recruitment.Infrastructure.Data;
 using System.Security.Claims;
-using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using XSystem.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
+using AutoMapper;
 
 namespace Sat.Recruitment.Infrastructure.Repositories
 {
     public class UserAuthRepository : IUserAuthRepository
     {
         private readonly SatRecruitmentContext _context;
+        private readonly IMapper _mapper;
         private readonly string _secretKey;
-        public UserAuthRepository(SatRecruitmentContext context, IConfiguration config) 
+        private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        public UserAuthRepository(SatRecruitmentContext context,
+                                  UserManager<AppUser> userManager,
+                                  RoleManager<IdentityRole> roleManager,
+                                  IMapper mapper,
+                                  IConfiguration config)
         { 
             _context = context;
-            _secretKey = config.GetValue<string>("ApiSettings:Secret");
+            _secretKey = config.GetValue<string>("ApiSettings:SecretKey");
+            _mapper = mapper;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
-        public UserAuth GetUserById(int userAuthId)
+        public AppUser GetUserById(string id)
         {
-            return _context.UsersAuth.FirstOrDefault(x => x.Id == userAuthId); 
+            return _context.AppUsers.FirstOrDefault(x => x.Id == id); 
         }
-        public ICollection<UserAuth> GetUsers()
+        public ICollection<AppUser> GetUsers()
         {
-            return _context.UsersAuth.OrderBy(u => u.Username).ToList();
+            return _context.AppUsers.OrderBy(u => u.UserName).ToList();
         }
         public bool IsUniqueUser(string username)
         {
-            var dbUser = _context.UsersAuth.FirstOrDefault(u => u.Username == username);
+            var dbUser = _context.AppUsers.FirstOrDefault(u => u.UserName == username);
             if (dbUser == null)
                 return true;
             else
@@ -39,16 +49,20 @@ namespace Sat.Recruitment.Infrastructure.Repositories
         }
         public async Task<UserLoginResponseDto> Login(UserLoginDto userLoginDto)
         {
-            var encryptedPassword = GetMD5(userLoginDto.Password);
-            var dbUser = _context.UsersAuth.FirstOrDefault(u => 
-                                                           u.Username.ToLower() == userLoginDto.Username.ToLower() && 
-                                                           u.Password == encryptedPassword);
-            if (dbUser == null)
+            //var encryptedPassword = GetMD5(userLoginDto.Password);
+
+            /*---COMPARES IF THE USERNAME EXISTS IN THE APPUSER TABLE---*/
+            var dbUser = _context.AppUsers.FirstOrDefault(u => u.UserName.ToLower() == userLoginDto.Username.ToLower());
+            bool isValidUser = await _userManager.CheckPasswordAsync(dbUser, userLoginDto.Password);
+            if (dbUser == null || isValidUser == false)
                 return new UserLoginResponseDto()
                 {
                     Token = string.Empty,
                     Usuario = null
                 };
+
+            /*---GETS THE dbRoles ACCORDING TO THE dbUser---*/
+            var dbRoles = await _userManager.GetRolesAsync(dbUser);
 
             var tokenManager = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_secretKey);
@@ -56,8 +70,8 @@ namespace Sat.Recruitment.Infrastructure.Repositories
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.Name, dbUser.Username.ToString()),
-                    new Claim(ClaimTypes.Role, dbUser.Role)
+                    new Claim(ClaimTypes.Name, dbUser.UserName.ToString()),
+                    new Claim(ClaimTypes.Role, dbRoles.FirstOrDefault())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -67,37 +81,58 @@ namespace Sat.Recruitment.Infrastructure.Repositories
             UserLoginResponseDto userLoginResponseDto = new UserLoginResponseDto()
             {
                 Token = tokenManager.WriteToken(token),
-                Usuario = dbUser
+                Usuario = _mapper.Map<UserAuthDto>(dbUser)
             };
 
             return userLoginResponseDto;
         }
-        public async Task<UserAuth> Register(UserRegisterDto userRegisterDto)
+        public async Task<UserAuthDto> Register(UserRegisterDto userRegisterDto)
         {
-            var encryptedPassword = GetMD5(userRegisterDto.Password);
-            UserAuth userAuth = new UserAuth()
+            //var encryptedPassword = GetMD5(userRegisterDto.Password);
+
+            AppUser tempUserApp = new AppUser()
             {
-                Username = userRegisterDto.Username,
-                Password = encryptedPassword,
-                Name = userRegisterDto.Name,
-                Role = userRegisterDto.Role
+                UserName = userRegisterDto.Username,
+                Email = userRegisterDto.Username,
+                NormalizedUserName = userRegisterDto.Name.ToUpper(),
+                Fullname = userRegisterDto.Name
             };
 
-            _context.UsersAuth.Add(userAuth);
-            await _context.SaveChangesAsync();
-            userAuth.Password = encryptedPassword;
-            return userAuth;
-        }
-        public static string GetMD5(string password)
-        {
-            MD5CryptoServiceProvider x = new MD5CryptoServiceProvider();
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(password);
-            data = x.ComputeHash(data);
-            string resp = "";
-            for (int i = 0; i < data.Length; i++)
-                resp += data[i].ToString("x2").ToLower();
+            var result = await _userManager.CreateAsync(tempUserApp, userRegisterDto.Password);
 
-            return resp;
+            if (result.Succeeded)
+            {
+                /*---THIS VALIDATION IS ONLY TO CREATE THE ROLES FOR THE FIRST TIME---*/
+                if (!_roleManager.RoleExistsAsync("Admin").GetAwaiter().GetResult())
+                {
+                    await _roleManager.CreateAsync(new IdentityRole("Admin"));
+                    await _roleManager.CreateAsync(new IdentityRole("Registered"));
+                }
+
+                await _userManager.AddToRoleAsync(tempUserApp, "Admin");
+                var userResponse = _context.AppUsers
+                                            .Select(dbUsers => new AppUser { Fullname = dbUsers.Fullname, UserName = dbUsers.UserName })
+                                            .Where(users => users.UserName == userRegisterDto.Username)
+                                            .FirstOrDefault();
+
+                return _mapper.Map<UserAuthDto>(userResponse);
+            }
+
+            //_context.AppUsers.Add(userAuth);
+            //await _context.SaveChangesAsync();
+            //userAuth.Password = encryptedPassword;
+            return new UserAuthDto();
         }
+        //public static string GetMD5(string password)
+        //{
+        //    MD5CryptoServiceProvider x = new MD5CryptoServiceProvider();
+        //    byte[] data = System.Text.Encoding.UTF8.GetBytes(password);
+        //    data = x.ComputeHash(data);
+        //    string resp = "";
+        //    for (int i = 0; i < data.Length; i++)
+        //        resp += data[i].ToString("x2").ToLower();
+
+        //    return resp;
+        //}
     }
 }

@@ -14,13 +14,13 @@ namespace Sat.Recruitment.Core.Services
         {
             _unitOfWork = unitOfWork;
         }
-        public async Task<List<IEnumerable<User>>> InsertUserAsync(IEnumerable<User> users)
+        public async Task<List<IEnumerable<UserDetails>>> InsertUserAsync(IEnumerable<UserDetails> users)
         {
-            IEnumerable<User> duplicated, notDuplicated;
-            List<IEnumerable<User>> result;
+            IEnumerable<UserDetails> duplicated, notDuplicated;
+            List<IEnumerable<UserDetails>> result;
             try
             {
-                result = new List<IEnumerable<User>>();
+                result = new List<IEnumerable<UserDetails>>();
                 duplicated = await _unitOfWork.UserRepository.FindDuplicatedUsers(users);
                 notDuplicated = users.Except(duplicated);
                 await _unitOfWork.UserRepository.AddByRange(notDuplicated);
@@ -36,7 +36,7 @@ namespace Sat.Recruitment.Core.Services
             
             return result;
         }
-        public IEnumerable<User> GetUsers() => _unitOfWork.UserRepository.GetAll();
+        public IEnumerable<UserDetails> GetUsers() => _unitOfWork.UserRepository.GetAll();
         public async Task<bool> DeleteUser(int id)
         {
             await _unitOfWork.UserRepository.Delete(id);
@@ -44,12 +44,12 @@ namespace Sat.Recruitment.Core.Services
             return true;
         }
 
-        public async Task<User> GetUser(int id)
+        public async Task<UserDetails> GetUser(int id)
         {
             return await _unitOfWork.UserRepository.GetById(id);
         }
 
-        public async Task InsertUserAsync(User user)
+        public async Task InsertUserAsync(UserDetails user)
         {            
             if (user == null)
                 throw new BusinessException("User cannot be null");           
@@ -58,7 +58,7 @@ namespace Sat.Recruitment.Core.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateUser(User user)
+        public async Task<bool> UpdateUser(UserDetails user)
         {
             var existingUser = await _unitOfWork.UserRepository.GetById(user.Id);
             existingUser.Name = user.Name;

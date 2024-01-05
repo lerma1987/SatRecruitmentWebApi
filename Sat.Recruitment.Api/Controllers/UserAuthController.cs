@@ -19,7 +19,7 @@ namespace Sat.Recruitment.Api.Controllers
     [Produces("application/json")]
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class UserAuthController : Controller
+    public class UserAuthController : ControllerBase
     {
         private readonly IUserAuthService _userAuthService;
         private readonly IMapper _mapper;
@@ -33,16 +33,29 @@ namespace Sat.Recruitment.Api.Controllers
             _userAuthService = userAuthService;
             _mapper = mapper;
         }
+
+        [HttpPost]
+        public IActionResult TestAction([FromBody] UserRegisterDto registeredUserDto)
+        {
+            var dbUsersAuthList = _userAuthService.GetUsers();
+            var dbUserListDto = new List<UserAuthDto>();
+
+            foreach (var dbUserItem in dbUsersAuthList)
+                dbUserListDto.Add(_mapper.Map<UserAuthDto>(dbUserItem));
+
+            return Ok(dbUserListDto);
+        }
+
         /// <summary>
         /// Gets all the registered users and its roles.
         /// </summary>
         /// <returns>A list of registered users.</returns>
-        [Authorize(Roles = "Admin")]
-        [HttpGet()]
+        //[Authorize(Roles = "Admin")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetUsersAuth()
+        public IActionResult GetAllUsersAuth()
         {
             var dbUsersAuthList = _userAuthService.GetUsers();
             var dbUserListDto = new List<UserAuthDto>();
@@ -57,14 +70,14 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="userAuthId">The UserAuthId to get.</param>
         /// <returns>The UserAuth info.</returns>
-        [Authorize(Roles = "Admin")]
-        [HttpGet("{userAuthId:int}", Name = "GetUserAuth")]
+        //[Authorize(Roles = "Admin")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetUserAuth(int userAuthId)
+        public IActionResult GetUserAuthById(string userAuthId)
         {
             var userAuthItem = _userAuthService.GetUserById(userAuthId);
 
@@ -79,15 +92,15 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="registeredUserDto">UserRegisterDto object.</param>
         /// <returns>ApiResponse info.</returns>
-        [AllowAnonymous]
-        [HttpPost("register")]
+        //[AllowAnonymous]
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto registeredUserDto)
         {
             bool isUnique = _userAuthService.IsUniqueUser(registeredUserDto.Username);
-            var apiResponse = new ApiResponse<UserRegisterDto>();
+            var apiResponse = new ApiResponse<string>();
             if (!isUnique)
             {
                 apiResponse.StatusCode = HttpStatusCode.BadRequest;
@@ -105,6 +118,7 @@ namespace Sat.Recruitment.Api.Controllers
                 return BadRequest(apiResponse);
             }
 
+            apiResponse.Result = $"{usuario.Name}, {usuario.Username}";
             apiResponse.StatusCode = HttpStatusCode.OK;
             apiResponse.IsSuccess = true;
             return Ok(apiResponse);
@@ -114,8 +128,8 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="userLoginDto">UserLoginDto object.</param>
         /// <returns>ApiResponse info.</returns>
-        [AllowAnonymous]
-        [HttpPost("login")]
+        //[AllowAnonymous]
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

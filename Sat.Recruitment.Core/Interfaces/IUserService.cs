@@ -6,11 +6,11 @@ namespace Sat.Recruitment.Core.Interfaces
     public interface IUserService
     {
         ArrayList InvalidUserTxtLines { get; set; }
-        Task<List<IEnumerable<User>>> InsertUserAsync(IEnumerable<User> users);
-        IEnumerable<User> GetUsers();
-        Task<User> GetUser(int id);
-        Task InsertUserAsync(User user);
-        Task<bool> UpdateUser(User user);
+        Task<List<IEnumerable<UserDetails>>> InsertUserAsync(IEnumerable<UserDetails> users);
+        IEnumerable<UserDetails> GetUsers();
+        Task<UserDetails> GetUser(int id);
+        Task InsertUserAsync(UserDetails user);
+        Task<bool> UpdateUser(UserDetails user);
         Task<bool> DeleteUser(int id);
     }
 }

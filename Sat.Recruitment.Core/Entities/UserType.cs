@@ -5,9 +5,9 @@ namespace Sat.Recruitment.Core.Entities
     {
         public UserType()
         {
-            Users = new HashSet<User>();
+            UserDetails = new HashSet<UserDetails>();
         }
         public string TypeName { get; set; }
-        public virtual ICollection<User> Users { get; set; }
+        public virtual ICollection<UserDetails> UserDetails { get; set; }
     }
 }

@@ -13,6 +13,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
 using Newtonsoft.Json;
+using Sat.Recruitment.Core.Services;
 
 namespace Sat.Recruitment.Api.Controllers
 {
@@ -22,7 +23,7 @@ namespace Sat.Recruitment.Api.Controllers
     [Produces("application/json")]
     [Route("api/[controller]/[action]")]
     [ApiController]    
-    public partial class UsersController : ControllerBase
+    public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
         private readonly IUserTypeService _userTypeService;
@@ -39,12 +40,24 @@ namespace Sat.Recruitment.Api.Controllers
             _mapper = mapper;
             _userTypeService = userTypeService;
         }
+
+        [HttpPost]
+        public IActionResult TestAction([FromBody] UserRegisterDto registeredUserDto)
+        {
+            var dbUsersAuthList = _userService.GetUsers();
+            var dbUserListDto = new List<UserAuthDto>();
+
+            foreach (var dbUserItem in dbUsersAuthList)
+                dbUserListDto.Add(_mapper.Map<UserAuthDto>(dbUserItem));
+
+            return Ok(dbUserListDto);
+        }
         /// <summary>
         /// Loads a Users.txt file for the first time.
         /// </summary>
         /// <returns>The users inserted in the DB.</returns>
-        [Authorize(Roles = "Admin")]
-        [HttpGet()]
+        //[Authorize(Roles = "Admin")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -68,8 +81,9 @@ namespace Sat.Recruitment.Api.Controllers
         /// Gets all the Users records from the DB
         /// </summary>
         /// <returns>An ApiResponse instance with the Users in Data property</returns>
-        [AllowAnonymous]
-        [HttpGet()]
+        //[AllowAnonymous]
+        [HttpGet]
+        [ResponseCache(CacheProfileName = "Default30seconds")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -88,14 +102,15 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="id">The User Id primary key.</param>
         /// <returns>An ApiResponse instance with a single User in Data property.</returns>
-        [AllowAnonymous]
-        [HttpGet("{id}")]
+        //[AllowAnonymous]
+        [HttpGet]
+        [ResponseCache(CacheProfileName = "Default30seconds")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var response = new ApiResponse<UserDto>();
             if (id <= 0)
@@ -124,7 +139,7 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="userDto">A UserDto instance to insert.</param>
         /// <returns>An ApiResponse instance with a single User in Data property.</returns>
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(UserDto))]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -149,7 +164,7 @@ namespace Sat.Recruitment.Api.Controllers
                 return NotFound(response);
             }
 
-            var user = _mapper.Map<User>(userDto);
+            var user = _mapper.Map<UserDetails>(userDto);
             await _userService.InsertUserAsync(user);
 
             userDto = _mapper.Map<UserDto>(user);
@@ -165,7 +180,7 @@ namespace Sat.Recruitment.Api.Controllers
         /// <param name="id">The user Id (identity-primary key).</param>
         /// <param name="userDto">A UserDto instance to update.</param>
         /// <returns>An ApiResponse instance with the User updated.</returns>
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -174,7 +189,7 @@ namespace Sat.Recruitment.Api.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Put(int id, [FromBody] UserDto userDto)
         {
-            var response = new ApiResponse<User>();
+            var response = new ApiResponse<UserDetails>();
             if (id <= 0 || userDto == null)
             {
                 response.IsSuccess = false;
@@ -189,7 +204,7 @@ namespace Sat.Recruitment.Api.Controllers
                 return NotFound(response);
             }
 
-            var user = _mapper.Map<User>(userDto);
+            var user = _mapper.Map<UserDetails>(userDto);
             user.Id = id;
 
             var result = await _userService.UpdateUser(user);
@@ -204,8 +219,8 @@ namespace Sat.Recruitment.Api.Controllers
         /// </summary>
         /// <param name="id">The user Id.</param>
         /// <returns>An ApiResponse instance.</returns>
-        [Authorize(Roles = "Admin")]
-        [HttpDelete("{id:int}")]
+        //[Authorize(Roles = "Admin")]
+        [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

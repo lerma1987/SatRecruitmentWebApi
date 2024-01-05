@@ -21,7 +21,7 @@ namespace Sat.Recruitment.Test
         [Fact]
         public void GetUsers()
         {
-            List<User> users = new List<User>();
+            List<UserDetails> users = new List<UserDetails>();
             var usersFromFile = _usersService.Setup(x => x.GetUsers()).Returns(users.AsEnumerable());
             Assert.NotNull(users);
         }
@@ -30,7 +30,7 @@ namespace Sat.Recruitment.Test
         public void GetUserById()
         {
             int id = 1;
-            Task<User> user = Task.FromResult(new User { Id = id });
+            Task<UserDetails> user = Task.FromResult(new UserDetails { Id = id });
             var singleUser = _usersService.Object.GetUser(id);
             Assert.NotNull(singleUser);
             Assert.True(id == singleUser.Id, "true");

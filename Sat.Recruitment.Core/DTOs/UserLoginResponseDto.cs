@@ -4,7 +4,7 @@ namespace Sat.Recruitment.Core.DTOs
 {
     public class UserLoginResponseDto
     {
-        public UserAuth Usuario { get; set; }
+        public UserAuthDto Usuario { get; set; }
         public string Token { get; set; }
     }
 }
